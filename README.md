@@ -10,7 +10,8 @@ _✨ AstrBot 的 B 站链接解析插件 ✨_
 - 支持 QQ 小程序 / 结构化分享卡片：AstrBot 的纯文本里拿不到卡片内容，插件会从原始消息段中提取链接；只有标题时会自动搜索第一个相关视频
 - 自动附带封面与配图（可按内容类型分别开关）、播放 / 弹幕 / 点赞等数据、UP 主与简介
 - 命中同一链接时在会话内去重，避免多个机器人重复推送
-- 支持白名单 / 黑名单、按群隐藏简介、图片尺寸缩放、代理、自定义 Cookie
+- 按 AstrBot 的 **UID / UMO** 精确控制白名单、黑名单与「不显示简介」的会话
+- 支持图片尺寸缩放、代理、自定义 Cookie
 - 可选的「搜视频」功能
 
 ## 安装
@@ -56,13 +57,27 @@ git clone https://github.com/Nakiya233/astrbot_plugin_analysis_bilibili.git
 | `timeout` | int | `15` | 请求超时时间（秒） |
 | `trust_env` | bool | `false` | 是否使用系统代理 |
 | `bilibili_cookie` | string | `""` | 可选，整段 Cookie；留空自动获取匿名指纹 |
-| `user_whitelist` | list | `[]` | 用户白名单 |
-| `group_whitelist` | list | `[]` | 群聊白名单 |
-| `user_blacklist` | list | `[]` | 用户黑名单 |
-| `group_blacklist` | list | `[]` | 群聊黑名单 |
-| `desc_blacklist` | list | `[]` | 不显示简介的群聊 |
+| `uid_whitelist` | list | `[]` | 用户 UID 白名单（AstrBot 的 sender ID） |
+| `umo_whitelist` | list | `[]` | 会话 UMO 白名单 |
+| `uid_blacklist` | list | `[]` | 用户 UID 黑名单 |
+| `umo_blacklist` | list | `[]` | 会话 UMO 黑名单 |
+| `umo_desc_blacklist` | list | `[]` | 不显示简介的会话 UMO |
 
 > 填写任意白名单后黑名单失效，与上游插件行为一致。
+
+### 关于 UID 与 UMO
+
+插件按 AstrBot 的会话模型做黑白名单，不再使用裸 QQ 群号：
+
+- **UID**：`event.get_sender_id()`，即发送者的平台用户 ID。
+- **UMO**：`event.unified_msg_origin`，格式为 `平台:消息类型:会话ID`，例如
+  `aiocqhttp:GroupMessage:123456789`、`aiocqhttp:FriendMessage:10001`。
+
+在 WebUI 中可以直接使用「用户选择器」和「会话选择器」添加，也可以手动填写。
+在机器人所在会话发送 `/sid` 指令即可查看当前会话的 UMO 与 UID。
+
+> 为兼容旧配置，会话列表中填写纯群号（如 `123456789`）仍然有效；
+> 但推荐使用完整的 UMO，这样私聊和多平台会话也能精确命中。
 
 ## 与 NoneBot 版本的差异
 
@@ -76,10 +91,10 @@ git clone https://github.com/Nakiya233/astrbot_plugin_analysis_bilibili.git
 | `analysis_enable_search` | `enable_search` | 同上 |
 | `analysis_trust_env` | `trust_env` | 同上 |
 | `analysis_bilibili_cookie` | `bilibili_cookie` | 同上 |
-| `analysis_whitelist` / `analysis_blacklist` | `user_whitelist` / `user_blacklist` | 同上 |
-| `analysis_group_whitelist` / `analysis_group_blacklist` | `group_whitelist` / `group_blacklist` | 同上 |
-| `analysis_desc_blacklist` | `desc_blacklist` | 同上 |
-| `analysis_use_on_message` | —— | AstrBot 的正则 / 自定义监听器本身就会处理所有未被唤醒词限制的消息，且会从原始消息段读取卡片，因此不再需要 |
+| `analysis_whitelist` / `analysis_blacklist` | `uid_whitelist` / `uid_blacklist` | 改为按 AstrBot UID 匹配 |
+| `analysis_group_whitelist` / `analysis_group_blacklist` | `umo_whitelist` / `umo_blacklist` | 改为按 AstrBot UMO 匹配 |
+| `analysis_desc_blacklist` | `umo_desc_blacklist` | 改为按 AstrBot UMO 匹配 |
+| `analysis_use_on_message` | —— | AstrBot 的正则 / 自定义监听器本身就会处理所有消息，且会从原始消息段读取卡片，因此不再需要 |
 
 另外：
 

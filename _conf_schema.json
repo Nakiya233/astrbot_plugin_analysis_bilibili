@@ -62,34 +62,39 @@
     "secret": true,
     "hint": "可选。整段填写形如 buvid3=xxx; SESSDATA=xxx 的 Cookie；留空则自动获取匿名指纹。"
   },
-  "user_whitelist": {
+  "uid_whitelist": {
     "type": "list",
-    "description": "用户白名单",
+    "description": "用户 UID 白名单",
     "default": [],
-    "hint": "只解析列表内 QQ 号 / 用户 ID 发送的链接。填写任意白名单后黑名单失效。"
+    "_special": "sender_id",
+    "hint": "只解析列表内用户发送的链接。UID 即发送者的平台用户 ID，可用 /sid 指令查看。填写任意白名单后黑名单失效。"
   },
-  "group_whitelist": {
+  "umo_whitelist": {
     "type": "list",
-    "description": "群聊白名单",
+    "description": "会话 UMO 白名单",
     "default": [],
-    "hint": "只解析列表内群号发送的链接。填写任意白名单后黑名单失效。"
+    "_special": "umo",
+    "hint": "只解析列表内会话（群聊 / 私聊）中的链接。UMO 格式为「平台:消息类型:会话ID」，可用 /sid 指令查看。填写任意白名单后黑名单失效。"
   },
-  "user_blacklist": {
+  "uid_blacklist": {
     "type": "list",
-    "description": "用户黑名单",
+    "description": "用户 UID 黑名单",
     "default": [],
-    "hint": "不解析列表内 QQ 号 / 用户 ID 发送的链接。"
+    "_special": "sender_id",
+    "hint": "不解析列表内用户发送的链接。UID 即发送者的平台用户 ID，可用 /sid 指令查看。"
   },
-  "group_blacklist": {
+  "umo_blacklist": {
     "type": "list",
-    "description": "群聊黑名单",
+    "description": "会话 UMO 黑名单",
     "default": [],
-    "hint": "不解析列表内群号发送的链接。"
+    "_special": "umo",
+    "hint": "不解析列表内会话（群聊 / 私聊）中的链接。UMO 格式为「平台:消息类型:会话ID」，可用 /sid 指令查看。"
   },
-  "desc_blacklist": {
+  "umo_desc_blacklist": {
     "type": "list",
-    "description": "不显示简介的群聊",
+    "description": "不显示简介的会话",
     "default": [],
-    "hint": "列表内的群号收到的解析结果不包含简介。"
+    "_special": "umo",
+    "hint": "列表内会话收到的解析结果不包含简介。"
   }
 }

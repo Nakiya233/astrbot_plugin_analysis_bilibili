@@ -161,12 +161,15 @@ def message_text(event: AstrMessageEvent, extra_url: str = "") -> str:
     return text.strip()
 
 
-class BiliLinkFilter(filter.CustomFilter):
-    """匹配纯文本或 QQ 小程序卡片中的 B 站链接。"""
+class CardLinkFilter(filter.CustomFilter):
+    """匹配「纯文本里没有链接、但卡片里带 B 站内容」的消息。
+
+    纯文本中的链接交给 ``@filter.regex`` 处理，避免同一条消息被解析两次。
+    """
 
     def filter(self, event: AstrMessageEvent, cfg: AstrBotConfig) -> bool:
         if LINK_PATTERN.search(event.message_str or ""):
-            return True
+            return False
         blob = card_text(event)
         if not blob:
             return False
@@ -242,24 +245,49 @@ class AnalysisBilibiliPlugin(Star):
             timeout=_to_float(cfg.get("timeout", 15)),
         )
 
-    def _ids(self, key: str) -> list[str]:
-        return _to_str_list(self.config.get(key, []))
+    def _config_list(self, *keys: str) -> list[str]:
+        """读取一个或多个配置项并合并为字符串列表（新键优先，兼容旧键）。"""
+        values: list[str] = []
+        for key in keys:
+            values.extend(_to_str_list(self.config.get(key, [])))
+        return values
+
+    @staticmethod
+    def _matches_session(event: AstrMessageEvent, entries: list[str]) -> bool:
+        """判断当前会话是否命中 UMO 列表。
+
+        列表项使用 AstrBot 的 unified_msg_origin（``平台:消息类型:会话ID``）。
+        为兼容旧配置，也允许直接填写纯群号。
+        """
+        if not entries:
+            return False
+        umo = str(event.unified_msg_origin or "")
+        group_id = str(event.get_group_id() or "")
+        for entry in entries:
+            if entry == umo:
+                return True
+            if ":" not in entry and group_id and entry == group_id:
+                return True
+        return False
 
     def _is_allowed(self, event: AstrMessageEvent) -> bool:
-        """白名单 / 黑名单判断，逻辑与 NoneBot 原插件一致。"""
-        user_id = str(event.get_sender_id() or "")
-        group_id = str(event.get_group_id() or "")
-        whitelist = self._ids("user_whitelist")
-        group_whitelist = self._ids("group_whitelist")
+        """按 AstrBot 的 UID（用户）与 UMO（会话）做白 / 黑名单判断。"""
+        uid = str(event.get_sender_id() or "")
+        uid_whitelist = self._config_list("uid_whitelist", "user_whitelist")
+        umo_whitelist = self._config_list("umo_whitelist", "group_whitelist")
 
-        if user_id in whitelist or (group_id and group_id in group_whitelist):
+        if (uid and uid in uid_whitelist) or self._matches_session(
+            event, umo_whitelist
+        ):
             return True
-        if whitelist or group_whitelist:
+        if uid_whitelist or umo_whitelist:
             return False
 
-        blacklist = self._ids("user_blacklist")
-        group_blacklist = self._ids("group_blacklist")
-        if user_id in blacklist or (group_id and group_id in group_blacklist):
+        uid_blacklist = self._config_list("uid_blacklist", "user_blacklist")
+        umo_blacklist = self._config_list("umo_blacklist", "group_blacklist")
+        if (uid and uid in uid_blacklist) or self._matches_session(
+            event, umo_blacklist
+        ):
             return False
         return True
 
@@ -268,11 +296,12 @@ class AnalysisBilibiliPlugin(Star):
             event.stop_event()
 
     def _session_key(self, event: AstrMessageEvent) -> str:
-        return str(event.get_group_id() or event.unified_msg_origin)
+        """去重使用的会话标识，直接使用 AstrBot 的 UMO。"""
+        return str(event.unified_msg_origin or event.get_group_id() or "")
 
     def _apply_desc_blacklist(self, event: AstrMessageEvent, msg: list) -> None:
-        group_id = str(event.get_group_id() or "")
-        if not group_id or group_id not in self._ids("desc_blacklist"):
+        entries = self._config_list("umo_desc_blacklist", "desc_blacklist")
+        if not self._matches_session(event, entries):
             return
         if msg and isinstance(msg[-1], str) and msg[-1].startswith("简介"):
             msg[-1] = ""
@@ -280,9 +309,20 @@ class AnalysisBilibiliPlugin(Star):
     # ------------------------------------------------------------------ #
     # 事件处理
     # ------------------------------------------------------------------ #
-    @filter.custom_filter(BiliLinkFilter)
-    async def parse_bilibili(self, event: AstrMessageEvent):
-        """检测到 B 站链接时自动解析，支持视频、番剧、直播、专栏与动态。"""
+    @filter.regex(LINK_PATTERN.pattern)
+    async def parse_link(self, event: AstrMessageEvent):
+        """消息中出现 B 站链接或 av / BV 号时自动解析。"""
+        async for item in self._handle_link(event):
+            yield item
+
+    @filter.custom_filter(CardLinkFilter)
+    async def parse_card_link(self, event: AstrMessageEvent):
+        """QQ 小程序 / 分享卡片中出现 B 站内容时自动解析。"""
+        async for item in self._handle_link(event):
+            yield item
+
+    async def _handle_link(self, event: AstrMessageEvent):
+        """解析当前消息中的 B 站内容，并产出要发送的结果。"""
         if not self._is_allowed(event):
             self._stop(event)
             return
