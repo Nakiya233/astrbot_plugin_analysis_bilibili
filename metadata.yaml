@@ -1,0 +1,8 @@
+name: astrbot_plugin_analysis_bilibili
+display_name: B站链接解析
+short_desc: 自动解析 B 站视频、番剧、直播、专栏与动态链接
+desc: 检测聊天中的 B 站链接（含 b23.tv 短链、QQ 小程序卡片），自动发送标题、UP 主、播放数据、封面与简介等信息。
+version: 1.0.0
+author: Nakiya233
+repo: https://github.com/Nakiya233/astrbot_plugin_analysis_bilibili
+astrbot_version: ">=4.0.0,<5"

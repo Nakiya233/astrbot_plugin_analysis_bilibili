@@ -1,0 +1,95 @@
+{
+  "display_image": {
+    "type": "bool",
+    "description": "显示封面 / 图片",
+    "default": true,
+    "hint": "开启后会附带视频封面、番剧封面、直播封面、专栏配图与动态图片。开启时下方的类型列表不生效。"
+  },
+  "display_image_list": {
+    "type": "list",
+    "description": "单独开启封面的类型",
+    "default": [],
+    "render_type": "checkbox",
+    "options": ["video", "bangumi", "live", "article", "dynamic"],
+    "labels": ["视频", "番剧", "直播", "专栏", "动态"],
+    "hint": "仅在「显示封面 / 图片」关闭时生效：勾选的类型仍会附带封面 / 图片。"
+  },
+  "images_size": {
+    "type": "string",
+    "description": "图片尺寸",
+    "default": "",
+    "hint": "留空发送原图；可填 100h、100w、100h_100w 等 B 站 CDN 缩放参数。"
+  },
+  "cover_images_size": {
+    "type": "string",
+    "description": "封面图尺寸",
+    "default": "",
+    "hint": "视频 / 番剧 / 直播封面使用该尺寸；留空则跟随「图片尺寸」。"
+  },
+  "reanalysis_time": {
+    "type": "int",
+    "description": "同一链接重新解析间隔（秒）",
+    "default": 0,
+    "hint": "0 表示不重复解析（只记住最近一个链接）；大于 0 时在该时间内同一链接不会再次解析，用于避免多个机器人重复推送。"
+  },
+  "enable_search": {
+    "type": "bool",
+    "description": "开启搜视频功能",
+    "default": false,
+    "hint": "开启后发送「搜视频 关键词」即可搜索并解析第一个结果。"
+  },
+  "stop_event": {
+    "type": "bool",
+    "description": "解析后阻止事件继续传播",
+    "default": true,
+    "hint": "开启后，链接消息不会再被其他插件或 LLM 重复回复；关闭后其它插件仍可处理同一条消息。"
+  },
+  "timeout": {
+    "type": "int",
+    "description": "请求超时时间（秒）",
+    "default": 15
+  },
+  "trust_env": {
+    "type": "bool",
+    "description": "使用系统代理",
+    "default": false,
+    "hint": "需要走环境变量中的 HTTP(S)_PROXY 代理时开启。"
+  },
+  "bilibili_cookie": {
+    "type": "string",
+    "description": "B 站 Cookie",
+    "default": "",
+    "secret": true,
+    "hint": "可选。整段填写形如 buvid3=xxx; SESSDATA=xxx 的 Cookie；留空则自动获取匿名指纹。"
+  },
+  "user_whitelist": {
+    "type": "list",
+    "description": "用户白名单",
+    "default": [],
+    "hint": "只解析列表内 QQ 号 / 用户 ID 发送的链接。填写任意白名单后黑名单失效。"
+  },
+  "group_whitelist": {
+    "type": "list",
+    "description": "群聊白名单",
+    "default": [],
+    "hint": "只解析列表内群号发送的链接。填写任意白名单后黑名单失效。"
+  },
+  "user_blacklist": {
+    "type": "list",
+    "description": "用户黑名单",
+    "default": [],
+    "hint": "不解析列表内 QQ 号 / 用户 ID 发送的链接。"
+  },
+  "group_blacklist": {
+    "type": "list",
+    "description": "群聊黑名单",
+    "default": [],
+    "hint": "不解析列表内群号发送的链接。"
+  },
+  "desc_blacklist": {
+    "type": "list",
+    "description": "不显示简介的群聊",
+    "default": [],
+    "hint": "列表内的群号收到的解析结果不包含简介。"
+  }
+}
